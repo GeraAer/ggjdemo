@@ -1,111 +1,60 @@
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 
 public class GameLoopController : MonoBehaviour
 {
-    // æ¸¸æˆç®¡ç†å™¨
+    // --- UI ÒıÓÃ²å²Û (ÔÚ Inspector Ãæ°åÖĞÍÏÈë¶ÔÓ¦µÄ Hierarchy ÎïÌå) ---
+    [Header("UI ÒıÓÃ")]
+    public Transform handParent;       // ÍÏÈë HandPanel
+    public Button challengeButton;     // ÍÏÈë ChallengeButton
+    public TextMeshProUGUI themeText;  // ÍÏÈëÏÔÊ¾Ö÷ÌâµÄÎÄ×ÖÎïÌå
+
+    // --- ÓÎÏ·Âß¼­ÒıÓÃ ---
     private GameManager gm;
     private TrophyManager trophyManager;
 
-    // å½“å‰å›åˆçŠ¶æ€å˜é‡
-    public string currentTheme = "Animal"; // ç¤ºä¾‹ä¸»é¢˜
-    private List<string> cardsOnTable = new List<string>(); // å½“å‰æ‰“å‡ºçš„ç‰Œ
-    private Player lastPlayer; // å½“å‰å‡ºç‰Œçš„ç©å®¶
-    private Player challenger; // è´¨ç–‘çš„ç©å®¶
+    [Header("ÓÎÏ·×´Ì¬")]
+    public string currentTheme = "Animal";
+    private List<string> cardsOnTable = new List<string>();
+    private Player lastPlayer;
+    private Player challenger;
 
     private void Start()
     {
         gm = GameManager.Instance;
         trophyManager = new TrophyManager();
-        // 1. æ¸¸æˆå¼€å§‹ (ä½¿ç”¨å·²æœ‰çš„ GameManager)
+
+        // È·±£³õÊ¼ UI ÏÔÊ¾ÕıÈ·
+        UpdateThemeUI();
+
         gm.StartGame();
-        // 2. å¯åŠ¨æ¸¸æˆå¾ªç¯åç¨‹
         StartCoroutine(MainGameLoop());
     }
 
-    IEnumerator MainGameLoop()
+    // --- ¹«¿ª·½·¨£º¹© Unity ½çÃæµ÷ÓÃ ---
+
+    // Ã¿´Î¸üĞÂÖ÷ÌâÊ±Í¬²½µ½ÆÁÄ»ÉÏ
+    public void UpdateThemeUI()
     {
-        while (true) // ï¿½ï¿½ï¿½ï¿½ï¿½æ·¨Ñ­ï¿½ï¿½
+        if (themeText != null)
         {
-            // --- ï¿½ï¿½ï¿½ï¿½ 1: ï¿½ï¿½ï¿½ï¿½ ---
-            Debug.Log("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½×¶ï¿½...");
-            // TODO: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½
-
-            // --- ï¿½ï¿½ï¿½ï¿½ 2: ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ ---
-            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôµï¿½ï¿½ï¿½ UI ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ¶ï¿½Îªï¿½Ô¶ï¿½
-            Debug.Log($"ï¿½ï¿½Ç°Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: {currentTheme}");
-
-            // --- ï¿½ï¿½ï¿½ï¿½ 3 & 4: ï¿½Ğ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ & ï¿½ï¿½ï¿½ï¿½Õ½ï¿½ï¿½Æ· ---
-            lastPlayer = gm.GetCurrentPlayer();
-            Debug.Log($"ï¿½Öµï¿½ï¿½ï¿½ï¿½: {lastPlayer.name} ï¿½ï¿½ï¿½ï¿½");
-
-            // --- ï¿½ï¿½ï¿½ï¿½ 5: ï¿½ï¿½ï¿½ï¿½ (1~3ï¿½ï¿½) ---
-            yield return StartCoroutine(WaitForPlayerPlayCards());
-
-            // --- ï¿½ï¿½ï¿½ï¿½ 6: ï¿½ï¿½ï¿½ï¿½ ---
-            yield return StartCoroutine(WaitForChallenge());
-
-            // ï¿½ï¿½ï¿½ï¿½Í¼ï¿½Ğµï¿½ï¿½Ğ¶ï¿½ï¿½ß¼ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½Ğ­ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-            yield return new WaitForSeconds(1f);
+            themeText.text = "µ±Ç°Ö÷Ìâ: " + currentTheme;
         }
     }
 
-    // ï¿½È´ï¿½ï¿½ï¿½Òµï¿½ï¿½ UI ï¿½ï¿½ï¿½ï¿½
-    IEnumerator WaitForPlayerPlayCards()
+    // ´¦ÀíÖÊÒÉÂß¼­ (°´Å¥µã»÷Ê±´¥·¢)
+    public void ExecuteChallengeLogic()
     {
-        Debug.Log("ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½...");
-        // ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ÃµÈ´ï¿½ UI ï¿½Â¼ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1-2ï¿½ï¿½ï¿½ï¿½
-        cardsOnTable.Clear();
-        int count = Random.Range(1, 3);
-        for (int i = 0; i < count; i++)
-        {
-            if (lastPlayer.GetHandCount() > 0)
-            {
-                string c = lastPlayer.hand[0];
-                lastPlayer.RemoveCard(c); // Ê¹ï¿½Ã¶ï¿½ï¿½Ñµï¿½ RemoveCard
-                cardsOnTable.Add(c);
-            }
-        }
-        yield return new WaitForSeconds(1f);
-    }
+        // Èç¹ûµ±Ç°Ã»ÓĞÈËÔÚ³öÅÆ£¬Ôò²»Ö´ĞĞÂß¼­
+        if (cardsOnTable.Count == 0) return;
 
-    // ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    IEnumerator WaitForChallenge()
-    {
-        Debug.Log("ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ (3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)...");
-        bool isChallenged = false;
-        float timer = 3f;
-
-        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½Ê¿ï¿½ï¿½ï¿½ï¿½Ğ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¥ï¿½ï¿½ï¿½
-        while (timer > 0)
-        {
-            timer -= Time.deltaTime;
-            // Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-            if (Random.value > 0.8f) { isChallenged = true; break; }
-            yield return null;
-        }
-
-        if (!isChallenged)
-        {
-            // --- ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ---
-            Debug.Log("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½Æ´ï¿½ï¿½");
-            HandleCheckHandStatus(false);
-        }
-        else
-        {
-            // ï¿½ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½Ò·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-            challenger = gm.GetAllPlayers()[1];
-            ExecuteChallengeLogic();
-        }
-    }
-
-    void ExecuteChallengeLogic()
-    {
         bool isLie = false;
         foreach (string card in cardsOnTable)
         {
-            // ï¿½Ğ¶ï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ Wild ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½
+            // ÅĞ¶ÏÂß¼­£ºÈç¹û²»°üº¬Ö÷ÌâÇÒ²»ÊÇÍòÄÜÅÆ(Wild)£¬¾ÍÊÇÈö»Ñ
             if (!card.Contains(currentTheme) && card != "Wild")
             {
                 isLie = true;
@@ -115,84 +64,132 @@ public class GameLoopController : MonoBehaviour
 
         if (isLie)
         {
-            // --- ï¿½ï¿½ï¿½É³É¹ï¿½ ---
-            Debug.Log("ï¿½ï¿½ï¿½É³É¹ï¿½ï¿½ï¿½");
-            challenger.AddMask(); // ï¿½ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ AddMask
-            lastPlayer.RemoveMask(); // ï¿½ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ RemoveMask
-
-            // ï¿½Ğ¶ï¿½ï¿½Ç·ï¿½Ã»ï¿½ï¿½ (ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Í¼)
+            Debug.Log("ÖÊÒÉ³É¹¦£¡");
+            challenger.AddMask();
+            lastPlayer.RemoveMask();
             HandleCheckHandStatus(true);
         }
         else
         {
-            // --- ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½ ---
-            Debug.Log("ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½");
+            Debug.Log("ÖÊÒÉÊ§°Ü£¡");
             challenger.RemoveMask();
             lastPlayer.AddMask();
-
-            // ï¿½Æ´ï¿½ï¿½ï¿½ß¼ï¿½
             HandleCheckHandStatus(false);
+        }
+
+        // ÖÊÒÉ½áÊøºóÇå¿Õ×ÀÃæ
+        cardsOnTable.Clear();
+    }
+
+    // --- ÄÚ²¿ÓÎÏ·Ñ­»·Ğ­³Ì ---
+
+    IEnumerator MainGameLoop()
+    {
+        while (true)
+        {
+            // ½×¶Î 1 & 2: ÃşÅÆÓëÖ÷Ìâ
+            UpdateThemeUI();
+            Debug.Log($"µ±Ç°Ñ¡ÔñµÄÖ÷Ìâ: {currentTheme}");
+
+            // ½×¶Î 3 & 4: ÅĞ¶¨Íæ¼Ò
+            lastPlayer = gm.GetCurrentPlayer();
+            Debug.Log($"ÂÖµ½Íæ¼Ò: {lastPlayer.name} ³öÅÆ");
+
+            // ½×¶Î 5: µÈ´ı³öÅÆ
+            yield return StartCoroutine(WaitForPlayerPlayCards());
+
+            // ½×¶Î 6: µÈ´ıÖÊÒÉ (ÕâÀï±£Áô×Ô¶¯Ä£ÄâÖÊÒÉ£¬ÄãÒ²¿ÉÒÔÊÖ¶¯µã°´Å¥)
+            yield return StartCoroutine(WaitForChallenge());
+
+            yield return new WaitForSeconds(1f);
+        }
+    }
+
+    IEnumerator WaitForPlayerPlayCards()
+    {
+        Debug.Log("µÈ´ıÍæ¼ÒÑ¡ÅÆ...");
+        cardsOnTable.Clear();
+        int count = Random.Range(1, 3);
+        for (int i = 0; i < count; i++)
+        {
+            if (lastPlayer.GetHandCount() > 0)
+            {
+                string c = lastPlayer.hand[0];
+                lastPlayer.RemoveCard(c);
+                cardsOnTable.Add(c);
+            }
+        }
+        yield return new WaitForSeconds(1f);
+    }
+
+    IEnumerator WaitForChallenge()
+    {
+        Debug.Log("µÈ´ıÖÊÒÉ (3Ãëµ¹¼ÆÊ±£¬ÄãÒ²¿ÉÒÔµã»÷ UI °´Å¥)...");
+        bool isChallenged = false;
+        float timer = 3f;
+
+        while (timer > 0)
+        {
+            timer -= Time.deltaTime;
+            // ÕâÀïµÄ×Ô¶¯Ëæ»úÄ£Äâ±£Áô£¬·½±ãÄã²âÊÔ
+            if (Random.value > 0.95f) { isChallenged = true; break; }
+            yield return null;
+        }
+
+        if (!isChallenged)
+        {
+            Debug.Log("ÎŞÈËÖÊÒÉ£¬Ë³ÀûÍ¨¹ı");
+            HandleCheckHandStatus(false);
+        }
+        else
+        {
+            // Ä£ÄâµÚ¶ş¸öÍæ¼Ò·¢ÆğÖÊÒÉ
+            challenger = gm.GetAllPlayers()[1];
+            ExecuteChallengeLogic();
         }
     }
 
     void HandleCheckHandStatus(bool wasChallengedSuccess)
     {
-        // ï¿½ï¿½ï¿½ï¿½Í¼ï¿½Úµã£ºï¿½Ç·ï¿½Ã»ï¿½ï¿½
         if (lastPlayer.GetHandCount() == 0)
         {
-            // Yes ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½Æ¿ï¿½ï¿½È¡ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             int count = cardsOnTable.Count;
             for (int i = 0; i < count; i++)
             {
                 lastPlayer.AddCard(gm.GetDeck().DrawCard());
             }
-            Debug.Log("Ã»ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½Â²ï¿½ï¿½Æ£ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½Æ½×¶ï¿½");
-            // ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¡ï¿½ï¿½ï¿½ï¿½Æ¡ï¿½
+            Debug.Log("Ã»ÅÆÁË£¬ÖØĞÂ²¹ÅÆ");
         }
         else
         {
-            // No åˆ†æ”¯ï¼šåˆ‡æ¢åˆ°ä¸‹ä¸€ä½ç©å®¶
             if (!wasChallengedSuccess)
             {
-                // ç‰ŒæˆåŠŸæ‰“å‡ºï¼Œæ·»åŠ åˆ°æˆ˜åˆ©å“åº“
                 AddCardsToTrophyPile();
             }
             gm.NextPlayer();
         }
     }
 
-    // å°†æ‰“å‡ºçš„ç‰Œæ·»åŠ åˆ°æˆ˜åˆ©å“åº“
     void AddCardsToTrophyPile()
     {
         if (lastPlayer == null || cardsOnTable.Count == 0) return;
-
-        // æ ¹æ®å½“å‰ä¸»é¢˜ç¡®å®šæˆ˜åˆ©å“ç±»å‹
         TrophyType trophyType = GetTrophyTypeByTheme(currentTheme);
-
-        // æ¯å¼ ç‰Œæ·»åŠ ä¸€ä¸ªæˆ˜åˆ©å“
         foreach (string card in cardsOnTable)
         {
             trophyManager.AddTrophy(lastPlayer.id, trophyType);
         }
-
-        Debug.Log($"Player {lastPlayer.name} added {cardsOnTable.Count} trophies (Type: {trophyType})");
+        Debug.Log($"Íæ¼Ò {lastPlayer.name} »ñµÃÁËÕ½ÀûÆ·: {trophyType}");
     }
 
-    // æ ¹æ®ä¸»é¢˜è·å–æˆ˜åˆ©å“ç±»å‹
     TrophyType GetTrophyTypeByTheme(string theme)
     {
         switch (theme)
         {
-            case "Animal":
-                return TrophyType.Type1;
-            case "Plant":
-                return TrophyType.Type2;
-            case "Food":
-                return TrophyType.Type3;
-            case "Color":
-                return TrophyType.Type4;
-            default:
-                return TrophyType.Type5; // Wildæˆ–å…¶ä»–æƒ…å†µ
+            case "Animal": return TrophyType.Type1;
+            case "Plant": return TrophyType.Type2;
+            case "Food": return TrophyType.Type3;
+            case "Color": return TrophyType.Type4;
+            default: return TrophyType.Type5;
         }
     }
 }
